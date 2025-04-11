@@ -103,7 +103,9 @@ class _SigninState extends State<Signin> {
                   hintText: "Email address",
                   hintStyle: TextStyle(color: Colors.black),
                   enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
+                    borderSide: BorderSide(
+                      color: const Color.fromARGB(255, 199, 8, 8),
+                    ),
                   ),
                 ),
               ),
