@@ -1,13 +1,9 @@
-import 'package:bca_student_app/pages/screens/profile.dart';
+import 'package:bca_student_app/pages/screens/my_home_page.dart';
 import 'package:bca_student_app/pages/screens/register_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// task
-///
-/// validation onall form fields
-/// add sign in button on register screen and send to related screen
-/// add register in button on sign screen and send to related screen
-/// profile screen should show the email of the user, user name
 class Signin extends StatefulWidget {
   const Signin({super.key});
 
@@ -19,11 +15,13 @@ class _SigninState extends State<Signin> {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void initState() {
+    super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    super.initState();
   }
 
   @override
@@ -35,21 +33,42 @@ class _SigninState extends State<Signin> {
 
   String? validateEmail(String? value) {
     const pattern =
-        r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'"
-        r'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-'
-        r'\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*'
-        r'[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4]'
-        r'[0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9]'
-        r'[0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\'
-        r'x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])';
+        r"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"
+        r'"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\'
+        r'[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:[a-z0-9](?:[a-z0-9-]*'
+        r'[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?';
     final regex = RegExp(pattern);
-
-    return value!.isNotEmpty && !regex.hasMatch(value)
+    return value == null || !regex.hasMatch(value)
         ? 'Enter a valid email address'
         : null;
   }
 
-  final _formKey = GlobalKey<FormState>();
+  String? validatePassword(String? value) {
+    return value == null || value.length < 6
+        ? 'Password must be at least 6 characters'
+        : null;
+  }
+
+  Future<void> _signIn() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text;
+
+    // Here you would normally authenticate with a backend.
+    // We're faking it by accepting any valid email/password pair:
+    if (email.isNotEmpty && password.isNotEmpty) {
+      await prefs.setBool('isLoggedIn', true);
+      await prefs.setString('email', email);
+      await prefs.setString('username', 'John Doe'); // Replace with real name
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => MyHomePage(title: 'Student App'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,150 +76,109 @@ class _SigninState extends State<Signin> {
       backgroundColor: Colors.blueGrey[100],
       body: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 60),
           children: [
-            SizedBox(height: 100),
-            Padding(
-              padding: const EdgeInsets.only(left: 5),
-              child: Text(
-                "welcome back",
-                style: TextStyle(
-                  fontSize: 30,
-                  color: Colors.pink[400],
-                  fontWeight: FontWeight.w900,
+            const SizedBox(height: 40),
+            Text(
+              "Welcome Back",
+              style: TextStyle(
+                fontSize: 30,
+                color: Colors.pink[400],
+                fontWeight: FontWeight.w900,
+              ),
+              textAlign: TextAlign.left,
+            ),
+            const SizedBox(height: 30),
+            TextFormField(
+              controller: _emailController,
+              validator: validateEmail,
+              keyboardType: TextInputType.emailAddress,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp("[0-9@a-zA-Z.]")),
+              ],
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.email_outlined, color: Colors.yellow[300]),
+                hintText: "Email address",
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
               ),
             ),
-            SizedBox(height: 30),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: TextFormField(
-                controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
-                  } else {
-                    validateEmail(value);
-                  }
-                },
-                onChanged: (value) {
-                  print("_emailController:::: ${_emailController.text}");
-                  // Handle email input
-                },
-                decoration: InputDecoration(
-                  prefixIcon: SizedBox(
-                    height: 10,
-                    width: 10,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Icon(
-                        Icons.email_outlined,
-                        color: Colors.yellow[300],
-                      ),
-                    ),
-                  ),
-                  hintText: "Email address",
-                  hintStyle: TextStyle(color: Colors.black),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(
-                      color: const Color.fromARGB(255, 199, 8, 8),
-                    ),
-                  ),
+            const SizedBox(height: 25),
+            TextFormField(
+              controller: _passwordController,
+              validator: validatePassword,
+              obscureText: true,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.lock_outline, color: Colors.yellow[300]),
+                hintText: "Password",
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
               ),
             ),
-            SizedBox(height: 25),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 40),
-              child: TextField(
-                decoration: InputDecoration(
-                  prefixIcon: SizedBox(
-                    height: 10,
-                    width: 10,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Icon(
-                        Icons.lock_outline,
-                        color: Colors.yellow[300],
-                      ),
-                    ),
-                  ),
-                  hintText: "Password",
-                  hintStyle: TextStyle(color: Colors.black),
-                  enabledBorder: UnderlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: 50),
+            const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  "sign in  ..................",
+                const Text(
+                  "Sign in",
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.black,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
+                    color: Colors.black,
                   ),
                 ),
+                const SizedBox(width: 20),
                 InkWell(
                   onTap: () {
                     if (_formKey.currentState!.validate()) {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder:
-                              (context) =>
-                                  ProfileScreen(email: _emailController.text),
-                        ),
-                      );
+                      _signIn();
                     }
                   },
                   child: ClipOval(
                     child: Container(
                       height: 50,
                       width: 50,
-                      decoration: BoxDecoration(color: Colors.blue[300]),
-                      child: Icon(Icons.arrow_forward_ios_outlined),
+                      color: Colors.blue[300],
+                      child: const Icon(Icons.arrow_forward_ios_outlined),
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 50),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => Register()),
-                      );
-                    },
-                    child: Text(
-                      "Register",
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.green,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    "Forgot password",
+            const SizedBox(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const Register()),
+                    );
+                  },
+                  child: const Text(
+                    "Register",
                     style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.red,
+                      fontSize: 18,
+                      color: Colors.green,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+                const Text(
+                  "Forgot password?",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.red,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            )
           ],
         ),
       ),
